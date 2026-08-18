@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Equation Balance Challenge</title>
+<style>
+:root{
+  --ink:#17324d; --muted:#5d7285; --line:#b9c9d6; --x:#bfe0ff; --u:#ffe39a;
+  --good:#e8f7ed; --bad:#fff0f0; --panel:#f8fbfd; --accent:#275f86;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#edf4f8;color:var(--ink)}
+main{max-width:1000px;margin:auto;padding:20px}
+.card{background:white;border-radius:18px;padding:22px;margin:16px 0;box-shadow:0 4px 14px #0002}
+h1{text-align:center;margin:4px 0 6px;font-size:34px}
+.lead{text-align:center;color:var(--muted);font-size:17px}
+.author{text-align:center;font-weight:bold;margin:8px 0 2px;color:#36566f}
+.question-nav{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:14px 0}
+.qbtn{background:#eef4f8;color:var(--ink);border:2px solid var(--line);padding:9px 12px;border-radius:10px;font-weight:bold;cursor:pointer}
+.qbtn.active{background:#dff0ff;border-color:#5e91b6}
+.qbtn.done{background:#e7f7ec;border-color:#8bb79a}
+.level-label{text-align:center;font-weight:bold;color:#456176;margin-top:6px}
+.problem{text-align:center;font-size:28px;font-weight:bold;margin:14px 0}
+.scale-wrap{height:300px;position:relative;margin:10px auto 15px;max-width:780px}
+.stand{position:absolute;left:50%;transform:translateX(-50%);bottom:15px;width:160px;height:25px;background:#35546d;border-radius:12px}
+.pole{position:absolute;left:50%;transform:translateX(-50%);bottom:38px;width:18px;height:155px;background:#35546d;border-radius:8px}
+.fulcrum{position:absolute;left:50%;transform:translateX(-50%);bottom:180px;width:0;height:0;border-left:30px solid transparent;border-right:30px solid transparent;border-bottom:48px solid #54758e}
+.beam{position:absolute;left:50%;bottom:208px;width:520px;height:15px;background:#6f8da2;border-radius:8px;transform-origin:center;transform:translateX(-50%) rotate(0deg);transition:.45s}
+.hanger{position:absolute;top:7px;width:2px;height:78px;background:#8099aa}.hanger.left{left:60px}.hanger.right{right:60px}
+.pan{position:absolute;top:85px;width:195px;min-height:95px;border:4px solid #6f8da2;border-top-width:6px;border-radius:0 0 85px 85px;background:#f9fcfe;display:flex;gap:7px;flex-wrap:wrap;align-content:center;justify-content:center;padding:10px;transition:.45s}
+.pan.left{left:-18px}.pan.right{right:-18px}.pan.over{outline:4px dashed #245579;outline-offset:3px}
+.tile{display:inline-flex;align-items:center;justify-content:center;border:2px solid #486b87;border-radius:9px;font-weight:bold;cursor:grab;user-select:none;box-shadow:0 2px 4px #0001}
+.tile:active{cursor:grabbing}.xtile{width:46px;height:72px;background:var(--x);font-size:22px}.unit{width:32px;height:32px;background:var(--u);font-size:15px}
+.toolbox,.trash{display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap;border:2px dashed #9bb0c0;border-radius:14px;padding:14px;background:var(--panel);margin:12px 0}
+.trash{min-height:64px}.trash.over{outline:4px dashed #b14a4a;background:#fff4f4}
+.label{font-weight:bold}.status{padding:13px;border-radius:11px;background:var(--panel);min-height:50px;margin-top:12px;font-size:16px}.good{background:var(--good)}.bad{background:var(--bad)}
+.controls{display:flex;gap:9px;justify-content:center;flex-wrap:wrap;margin-top:12px}
+button.action{border:0;border-radius:10px;padding:11px 15px;font-weight:bold;background:var(--accent);color:#fff;cursor:pointer}
+button.secondary{background:#6d8293}
+.progress{height:12px;background:#e5edf3;border-radius:8px;overflow:hidden}.progress div{height:100%;background:#5f91b6;width:0%;transition:.4s}
+input{padding:10px;border:2px solid var(--line);border-radius:9px;font-size:17px;width:190px;text-align:center}
+.hint{font-size:14px;color:var(--muted);text-align:center}
+footer{margin:28px auto 10px;padding:16px 20px;text-align:center;border-top:2px solid #b9c9d6;color:#17324d;font-size:14px}
+@media(max-width:700px){.beam{width:370px}.pan{width:145px}.hanger.left{left:38px}.hanger.right{right:38px}.problem{font-size:23px}}
+</style>
+</head>
+<body>
+<main>
+<div class="card">
+<h1>⚖️ Equation Balance Challenge</h1>
+<p class="author">Created by: Arnella Thomas, M.Ed.</p>
+<p class="lead">Work through all 10 challenges. The questions become more complex as you go.</p>
+<div class="question-nav" id="qnav"></div>
+<div class="progress"><div id="bar"></div></div>
+<div class="level-label" id="levelLabel"></div>
+</div>
+
+<div class="card">
+<div class="problem" id="problemText"></div>
+
+<div class="scale-wrap">
+  <div class="stand"></div><div class="pole"></div><div class="fulcrum"></div>
+  <div class="beam" id="beam">
+    <div class="hanger left"></div><div class="hanger right"></div>
+    <div class="pan left" id="leftPan" data-side="left"></div>
+    <div class="pan right" id="rightPan" data-side="right"></div>
+  </div>
+</div>
+
+<p class="hint" id="hintText"></p>
+
+<div class="toolbox" id="toolbox">
+  <span class="label">Drag to ADD:</span>
+  <div class="tile xtile" draggable="true" data-source="toolbox" data-type="x">x</div>
+  <div class="tile unit" draggable="true" data-source="toolbox" data-type="u">1</div>
+</div>
+
+<div class="trash" id="trash">
+  <span class="label">🗑️ Drag tiles here to REMOVE them</span>
+</div>
+
+<div class="status" id="status"></div>
+
+<div class="controls">
+  <input id="answer" placeholder="Enter your answer">
+  <button class="action" onclick="checkAnswer()">Check Answer</button>
+  <button class="action secondary" onclick="resetQuestion()">Reset</button>
+</div>
+</div>
+
+<footer>
+  <strong>© 2026 Arnella Thomas, M.Ed. All Rights Reserved.</strong>
+</footer>
+</main>
+
+<script>
+const questions=[
+ {level:'Start Here',text:'x + 3 = 7',left:{x:1,u:3},right:{x:0,u:7},answer:'4',solutionValue:4,final:'x = 4',hint:'Try removing 3 unit tiles from both sides.'},
+ {level:'Build It',text:'x + 5 = 9',left:{x:1,u:5},right:{x:0,u:9},answer:'4',solutionValue:4,final:'x = 4',hint:'What can you remove from both sides first?'},
+ {level:'Build It',text:'2x + 4 = 12',left:{x:2,u:4},right:{x:0,u:12},answer:'4',solutionValue:4,final:'x = 4',hint:'Remove 4 from both sides. When you reach 2x = 8, think: if 2 equal x-tiles total 8, what is one x worth?'},
+ {level:'Multi-Step',text:'3x + 6 = 18',left:{x:3,u:6},right:{x:0,u:18},answer:'4',solutionValue:4,final:'x = 4',hint:'Remove 6 from both sides. When you reach 3x = 12, split 12 equally among the 3 x-tiles.'},
+ {level:'Variables on Both Sides',text:'4x + 2 = 2x + 10',left:{x:4,u:2},right:{x:2,u:10},answer:'4',solutionValue:4,final:'x = 4',hint:'Try removing the same number of x-tiles from both sides.'},
+ {level:'Variables on Both Sides',text:'5x + 3 = 3x + 11',left:{x:5,u:3},right:{x:3,u:11},answer:'4',solutionValue:4,final:'x = 4',hint:'First get the x-tiles together on one side.'},
+ {level:'Variables on Both Sides',text:'6x + 2 = 4x + 10',left:{x:6,u:2},right:{x:4,u:10},answer:'4',solutionValue:4,final:'x = 4',hint:'Remove matching x-tiles first, then remove matching unit tiles.'},
+ {level:'Types of Solutions',text:'2x + 4 = 2x + 4',left:{x:2,u:4},right:{x:2,u:4},answer:'infinitely many',final:'Infinitely many solutions',hint:'Remove the same x-tiles and unit tiles from both sides. What remains?'},
+ {level:'Types of Solutions',text:'2x + 4 = 2x + 10',left:{x:2,u:4},right:{x:2,u:10},answer:'no solution',final:'No solution',hint:'Remove the x-tiles from both sides. Is the remaining statement true or false?'},
+ {level:'Challenge',text:'3x + 6 = 3(x + 2)',left:{x:3,u:6},right:{x:3,u:6},answer:'infinitely many',final:'Infinitely many solutions',hint:'The right side simplifies to 3x + 6. Compare both sides.'}
+];
+
+let qi=0,state,net;
+let completed=new Set();
+const deep=o=>JSON.parse(JSON.stringify(o));
+
+function buildNav(){
+ qnav.innerHTML='';
+ questions.forEach((q,i)=>{
+   const b=document.createElement('button');
+   b.className='qbtn'+(i===qi?' active':'')+(completed.has(i)?' done':'');
+   b.textContent=i+1;
+   b.onclick=()=>{qi=i;resetQuestion()};
+   qnav.appendChild(b);
+ });
+}
+function makeTile(type,side){
+ const d=document.createElement('div');
+ d.className='tile '+(type==='x'?'xtile':'unit');
+ d.textContent=type==='x'?'x':'1'; d.draggable=true;
+ d.dataset.source='pan';d.dataset.side=side;d.dataset.type=type;
+ d.addEventListener('dragstart',dragStart);return d;
+}
+function expr(s){
+ let p=[];if(s.x)p.push((s.x===1?'':s.x)+'x');if(s.u)p.push(String(s.u));return p.length?p.join(' + '):'0';
+}
+function render(){
+ leftPan.innerHTML='';rightPan.innerHTML='';
+ for(const side of ['left','right']){
+   const pan=side==='left'?leftPan:rightPan;
+   for(let i=0;i<state[side].x;i++)pan.appendChild(makeTile('x',side));
+   for(let i=0;i<state[side].u;i++)pan.appendChild(makeTile('u',side));
+ }
+ problemText.textContent=expr(state.left)+' = '+expr(state.right);
+ levelLabel.textContent=questions[qi].level;
+ hintText.textContent='Hint: '+questions[qi].hint;
+ updateScale();
+ buildNav();
+ bar.style.width=(completed.size/questions.length*100)+'%';
+}
+function updateScale(){
+ const q=questions[qi];
+ let balanced=false, diff=0;
+
+ if(typeof q.solutionValue==='number'){
+   const leftValue=state.left.x*q.solutionValue + state.left.u;
+   const rightValue=state.right.x*q.solutionValue + state.right.u;
+   diff=leftValue-rightValue;
+   balanced=Math.abs(diff)<0.0001;
+ }else if(q.answer==='infinitely many'){
+   const dx=state.left.x-state.right.x;
+   const du=state.left.u-state.right.u;
+   diff=dx+du;
+   balanced=(dx===0 && du===0);
+ }else{
+   const dx=net.left.x-net.right.x;
+   const du=net.left.u-net.right.u;
+   diff=dx+du;
+   balanced=(dx===0 && du===0);
+ }
+
+ beam.style.transform=`translateX(-50%) rotate(${balanced?0:(diff>0?-7:7)}deg)`;
+ document.querySelector('.pan.left').style.top=balanced?'85px':(diff>0?'96px':'72px');
+ document.querySelector('.pan.right').style.top=balanced?'85px':(diff>0?'72px':'96px');
+
+ if(balanced){
+   status.className='status good';
+   if(typeof q.solutionValue==='number' && state.left.x===1 && state.left.u===0 && state.right.x===0 && state.right.u===q.solutionValue){
+     status.innerHTML='🎉 Balanced and simplified! <b>x = '+q.solutionValue+'</b>.';
+   }else{
+     status.innerHTML='✅ Balanced. Both sides still have the same value.';
+   }
+ }else{
+   status.className='status bad';
+   status.innerHTML='⚠️ Unbalanced. The two sides no longer have the same value.';
+ }
+}
+function dragStart(e){
+ e.dataTransfer.setData('text/plain',JSON.stringify({source:e.target.dataset.source,side:e.target.dataset.side||'',type:e.target.dataset.type}));
+}
+document.querySelectorAll('#toolbox .tile').forEach(t=>t.addEventListener('dragstart',dragStart));
+for(const pan of [leftPan,rightPan]){
+ pan.addEventListener('dragover',e=>{e.preventDefault();pan.classList.add('over')});
+ pan.addEventListener('dragleave',()=>pan.classList.remove('over'));
+ pan.addEventListener('drop',e=>{
+   e.preventDefault();pan.classList.remove('over');
+   const d=JSON.parse(e.dataTransfer.getData('text/plain')),target=pan.dataset.side,type=d.type;
+   if(d.source==='toolbox'){state[target][type]++;net[target][type]++;render()}
+   else if(d.source==='pan'&&d.side!==target&&state[d.side][type]>0){
+     state[d.side][type]--;state[target][type]++;net[d.side][type]--;net[target][type]++;render();
+   }
+ });
+}
+trash.addEventListener('dragover',e=>{e.preventDefault();trash.classList.add('over')});
+trash.addEventListener('dragleave',()=>trash.classList.remove('over'));
+trash.addEventListener('drop',e=>{
+ e.preventDefault();trash.classList.remove('over');
+ const d=JSON.parse(e.dataTransfer.getData('text/plain'));
+ if(d.source==='pan'&&state[d.side][d.type]>0){state[d.side][d.type]--;net[d.side][d.type]--;render()}
+});
+function resetQuestion(){
+ const q=questions[qi];state={left:deep(q.left),right:deep(q.right)};net={left:{x:0,u:0},right:{x:0,u:0}};answer.value='';render();
+ status.className='status';status.textContent='Drag tiles to solve while keeping the scale balanced.';
+}
+function normalize(s){return s.trim().toLowerCase().replace(/\s+/g,' ')}
+function checkAnswer(){
+ const q=questions[qi],a=normalize(answer.value);let ok=false;
+ if(q.answer==='infinitely many')ok=['infinitely many','infinite','infinitely many solutions'].includes(a);
+ else if(q.answer==='no solution')ok=['no solution','none'].includes(a);
+ else ok=[q.answer,'x='+q.answer,'x = '+q.answer].includes(a);
+ if(ok){
+   completed.add(qi);status.className='status good';status.innerHTML='🎉 Correct! <b>'+q.final+'</b>.';
+   buildNav();bar.style.width=(completed.size/questions.length*100)+'%';
+   if(qi<questions.length-1){
+     const br=document.createElement('br');const b=document.createElement('button');b.className='action';b.textContent='Next Challenge →';
+     b.onclick=()=>{qi++;resetQuestion()};status.appendChild(br);status.appendChild(b);
+   }else if(completed.size===questions.length){status.innerHTML='🏆 You completed all 10 Equation Balance Challenges!'}
+ }else{status.className='status bad';status.textContent='Not yet. Use the tiles, the scale, and the hint to test your thinking.'}
+}
+resetQuestion();
+</script>
+</body>
+</html>
